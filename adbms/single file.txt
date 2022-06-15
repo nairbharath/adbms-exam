@@ -1,0 +1,147 @@
+SQL
+
+//Aggregate function
+
+
+create database college;
+use college;
+
+create table department(dept_id varchar(10) primary key,dept_name varchar(30));
+create table staff(staff_id varchar(20) primary key,sname varchar(20),designation varchar(20),qualification varchar(30),type_of_appointment varchar(20),dept_id varchar(10),salary varchar(10),foreign key(dept_id) references department(dept_id));
+
+insert into department values(5,"Computer Application");
+insert into department values(1,"CSE");
+insert into department values(2,"Civil Engineering");
+insert into department values(3,"Mechanical");
+insert into department values(4,"Electrical and Electronics");
+
+insert into staff values(1001,"Reena","Professor","PhD","Regular",5,200000);
+insert into staff values(2022,"Virat","Asst. Professor","PhD","Regular",2,150000);
+insert into staff values(3123,"Devika","Lecturer","MCA","Contract",5,70000);
+insert into staff values(3341,"Prem","Lecturer","MTech","Contract",3,72000);
+insert into staff values(1502,"Ashwin","Assoc. Professor","PhD","Regular",5,175000);
+insert into staff values(4815,"Reshma","Lecturer","MTech","Contract",4,67000);
+
+#Q1
+select department.dept_name ,count(staff.dept_id) as no_of_faculties
+from staff, department 
+where staff.dept_id=department.dept_id and
+type_of_appointment = "Contract" 
+group by staff.dept_id;
+
+#Q2
+select max(p_count), dept_name from 
+((select department.dept_name, count(staff.dept_id) as p_count
+from staff, department
+where staff.dept_id=department.dept_id and
+staff.qualification="PhD"
+group by staff.dept_id)
+
+as pros) 
+group by dept_name
+order by dept_name desc LIMIT 1;
+
+#OR 
+
+select count(staff.dept_id), department.dept_name 
+from staff, department
+where staff.dept_id=department.dept_id and
+staff.qualification="PhD"
+group by staff.dept_id 
+order by dept_name desc LIMIT 1;
+
+#Q3
+select  department.dept_name, avg(staff.salary)
+from staff, department
+where staff.dept_id=department.dept_id
+group by staff.dept_id;
+
+#Q4 
+select max(staff.salary), staff.sname, department.dept_name 
+from staff, department
+where staff.dept_id=department.dept_id
+group by staff.dept_id
+order by staff.salary desc;
+
+
+Mongodb
+
+//json (college.py)
+
+import pymongo
+url="mongodb://localhost:27017"
+c = pymongo.MongoClient(url)
+db = c["college"]
+coll = db["stud_list"]
+
+print("\n\n1:\n")
+for x in coll.find({"gender":"female","course":"MCA"}):
+	print(x["name"]["fname"]+" "+x["name"]["lname"]+" "+x["course"]+" "+x["gender"])
+
+print("\n\n2:\n")
+for m in coll.find({"course":"MCA"}).sort("mark",-1).limit(1):
+	print(m["name"]["fname"]+" "+m["name"]["lname"]+" "+str(m["mark"]))
+
+print("\n\n3:\n")
+for x in coll.find({"gender":"male","grade":"A+"},{"_id":0,"name.fname":1,"name.lname":1,"grade":1,"gender":1}):
+	print(x["name"]["fname"]+" "+x["name"]["lname"]+" "+x["grade"]+" "+x["gender"])
+
+print("\n\n4:\n")
+for s in coll.find().sort("course","Mechanical").sort("mark",-1).limit(3):
+	print(s["name"]["fname"]+" "+s["name"]["lname"]+" "+str(s["mark"]))
+
+print("\n\n5:\n")
+for i in coll.find({"gender":"female","mark":{'$gt':90}}):
+	print(i["name"]["fname"]+" "+i["name"]["lname"]+" "+str(i["mark"]))
+
+print("\n\n6:\n")
+for i in coll.find({"mark":{'$gt':80,'$lt':90}}):
+	print(i["name"]["fname"]+" "+i["name"]["lname"]+" "+i["course"]+" "+str(i["mark"]))
+
+print("\n\n7:\n")
+for i in coll.find({"name.fname":{'$regex': '^V'}}):
+	print(i["name"]["fname"]+" "+i["name"]["lname"])
+
+print("\n\n8:\n")
+for x in coll.find({"address.city":"Kollam"}):
+	print(x["name"]["fname"]+" "+x["name"]["lname"]+" "+x["address"]["city"])
+
+print("\n\n9:\n")
+for x in coll.find({'$nor':[{"address.city":{'$in': ['Kollam','Thiruvananthapuram']}}]}):
+	print(x["name"]["fname"]+" "+x["name"]["lname"]+" "+x["address"]["city"])
+
+print("\n\n10:\n")
+
+for x in coll.find({"gender":"female",'$nor':[{"address.city":'Kollam'},{"address.city":'Thiruvananthapuram'}]}):
+	print(x["name"]["fname"])
+
+
+
+//Vaccination, Lab external(exam.py)
+
+import pymongo
+url="mongodb://localhost:27017/"
+c=pymongo.MongoClient(url)
+db=c["exam"]
+coll=db["student"]
+#coll.insert_many([{"_id":1,"Name":"Anjali","Place":"Kollam","Phone":8582639562,"Vaccination_status":"Both vaccinated","RTPCR":"negative","Lab_mark":{"Internal":30,"External":45},"Department":"MCA"},
+#{"_id":2,"Name":"Anuradha","Place":"Varkala","Phone":9992639562,"Vaccination_status":"Both vaccinated","RTPCR":"negative","Lab_mark":{"Internal":40,"External":48},"Department":"Civil"},
+#{"_id":3,"Name":"Bismiya","Place":"Kollam","Phone":9446639562,"Vaccination_status":"not vaccinated","RTPCR":"positive","Lab_mark":{"Internal":50,"External":39},"Department":"MCA"},
+#{"_id":4,"Name":"Vimal","Place":"Ernakulam","Phone":8582639568,"Vaccination_status":"First dose only","RTPCR":"positive","Lab_mark":{"Internal":40,"External":42},"Department":"Civil"},
+#{"_id":5,"Name":"Vivek","Place":"Kollam","Phone":8582639777,"Vaccination_status":"Both vaccinated","RTPCR":"negative","Lab_mark":{"Internal":50,"External":50},"Department":"MCA"}])
+print("Q.03")
+for i in coll.find({"Vaccination_status":"not vaccinated"},{"Name":1,"Phone":1,"_id":0}):
+	print(i["Name"]+" "+str(i["Phone"]))
+print("Q.04")
+for i in coll.find({"Department":"MCA"}).sort("Lab_mark.External",-1).limit(2):
+	print(i["Name"]+" "+str(i["Phone"]))
+print("Q.05")
+for i in coll.find({"Name":{"$regex":'^A'}},{"Name":1,"Department":1,"_id":1}):
+	print(str(i["_id"])+" "+i["Name"]+" "+i["Department"])
+print("Q.06")
+coll.update_one({"_id":4},{"$set":{"Vaccination_status":"NOT vaccinated"}})
+print("Updated!!!")
+
+print("Q.07")
+for i in coll.find({},{"Name":1}).sort("Lab_mark.External",-1):
+	print(i["Name"])
